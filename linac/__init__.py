@@ -21,14 +21,6 @@ class Environment(environment.Environment):
     observables = ['L3:CM1:measCurrentCM','L5:CM1:measCurrentCM' ]  # measurements
     # test values before reading
     _test_variables = {'L1:RG2:KIK:chargeTrigC' : [0.5,1.0]}
-    """
-    def test_conditions(self,test_variables):
-        for key, (min_val, max_val) in self.test_variables.items():
-            current_value = pva.Channel(key,pva.CA).get()['value']
-            if not min_val <= current_value <= max_val:
-                return False
-        return True
-    """
     def get_variables(self,variable_names):
         """
         input is a list
@@ -37,21 +29,7 @@ class Environment(environment.Environment):
         """
         #if self.test_conditions(self._test_variables):
         #    pass
-        """
-        conditions = False
-        for i in range(3):
-            print (f'checking conditions for the {i}')
-            for key, (min_val, max_val) in self._test_variables.items():
-                current_value = pva.Channel(key,pva.CA).get()['value']['index']
-                if not min_val <= current_value <= max_val:
-                    conditions = True
-                    break
-                else:
-                    sleep(0.5)
-
-        print ('conditions are met, getting data')
-        """
-
+        
         channels = pva.MultiChannel(variable_names, pva.CA)
         get_value = [v[0]['value'] for v in channels.get().toDict()['value']]
         return {variable_names[k]: get_value[k] for k in range(len(variable_names))}

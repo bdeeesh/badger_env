@@ -7,7 +7,6 @@ from time import sleep
 
 
 class Environment(environment.Environment):
-    #SMOKE_TEST = False # do not write anything 
 
     name = 'par'  # name of the environment
     variables = {  # variables and their hard-limited ranges
@@ -38,14 +37,6 @@ class Environment(environment.Environment):
             'It:ParExtChargeDDG.GATE':[0.5,1.5],
             'LTP:ControlLawXRC.RUN':[-0.5,0.5]
             }
-    """
-    def test_conditions(self,test_variables):
-        for key, (min_val, max_val) in self.test_variables.items():
-            current_value = pva.Channel(key,pva.CA).get()['value']
-            if not min_val <= current_value <= max_val:
-                return False
-        return True
-    """
     def get_variables(self,variable_names):
         """
         input is a list
