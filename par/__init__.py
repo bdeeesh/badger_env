@@ -9,9 +9,9 @@ from time import sleep
 class Environment(environment.Environment):
     #SMOKE_TEST = False # do not write anything 
 
-    name = 'ltp'  # name of the environment
+    name = 'par'  # name of the environment
     variables = {  # variables and their hard-limited ranges
-        'L4:TM:sledTrigAO': [-0.68, -0.2],
+        'L4:TM:sledTrigAO': [-0.2, -0.68],
         'LTP:H3:CurrentAO': [-2.0, 2.0],
         'LTP:H2:CurrentAO': [-2.0, 2.0],
         'LTP:H1:CurrentAO': [-2.0, 2.0],
@@ -38,6 +38,14 @@ class Environment(environment.Environment):
             'It:ParExtChargeDDG.GATE':[0.5,1.5],
             'LTP:ControlLawXRC.RUN':[-0.5,0.5]
             }
+    """
+    def test_conditions(self,test_variables):
+        for key, (min_val, max_val) in self.test_variables.items():
+            current_value = pva.Channel(key,pva.CA).get()['value']
+            if not min_val <= current_value <= max_val:
+                return False
+        return True
+    """
     def get_variables(self,variable_names):
         """
         input is a list
@@ -65,7 +73,7 @@ class Environment(environment.Environment):
             Exception: If the values could not be set after retries.
         """
         
-        TEST_RUN = True
+        TEST_RUN = False
         if TEST_RUN:
             print (len(variable_inputs.keys()))
             return 
@@ -73,7 +81,9 @@ class Environment(environment.Environment):
             pass
 
         channels = pva.MultiChannel(list(variable_inputs.keys()), pva.CA)
-        channels.putAsDoubleArray(list(variable_inputs.values()))
+        values = list(variable_inputs.values())
+
+        #channels.putAsDoubleArray(list(variable_inputs.values()))
         verify = False
 
         """try to verify variables  """
