@@ -9,7 +9,7 @@ from time import sleep
 class Environment(environment.Environment):
     #SMOKE_TEST = False # do not write anything 
 
-    name = 'linac'  # name of the environment
+    name = 'RG2 quad'  # name of the environment
     variables = {  # variables and their hard-limited ranges
         'L1:RG2:Q1:SetDacCurrentC': [-2.0, 2.0],
         'L1:RG2:Q2:SetDacCurrentC': [-2.0, 2.0],
@@ -18,27 +18,8 @@ class Environment(environment.Environment):
         'L1:Q3:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q4:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q5:SetDacCurrentC': [-2.0, 2.0],
-        # steering RG2
-        'L1:V1:SetDacCurrentC': [-2.0, 2.0],
-        'L1:V2:SetDacCurrentC': [-2.0, 2.0],
-        'L1:V3:SetDacCurrentC': [-2.0, 2.0],
-        'L1:H1:SetDacCurrentC': [-2.0, 2.0],
-        'L1:H2:SetDacCurrentC': [-2.0, 2.0],
-        # L2 steering
-        'L2:SC1:HZ:PS:setCurrentAO':[ -2.0 ,2.0],  
-        'L2:SC1:VL:PS:setCurrentAO':[ -2.0 ,2.0], 
-        'L2:SC2:HZ:PS:setCurrentAO':[ -2.0 ,2.0], 
-        'L2:SC2:VL:PS:setCurrentAO':[ -2.0 ,2.0], 
-        'L2:SC3:HZ:PS:setCurrentAO':[ -2.0 ,2.0], 
-        'L2:SC3:VL:PS:setCurrentAO':[ -2.0 ,2.0], 
-        'L2:SC4:HZ:PS:setCurrentAO':[ -2.0 ,2.0], 
-        'L2:SC4:VL:PS:setCurrentAO':[ -2.0 ,2.0],
-        # alpha magnet
-        'L1:RG2:LFA:CurrentAO':[1.30e+02,1.45e+02],
-        # phase L1
-        'L1:PP:phaseAdjAO':[6.0e+00,1.0e+01],
     }
-    observables = ['L1:CM1:measCurrentCM','L3:CM1:measCurrentCM','L5:CM1:measCurrentCM' ]  # measurements
+    observables = ['L3:CM1:measCurrentCM','L5:CM1:measCurrentCM' ]  # measurements
     # test values before reading
     _test_variables = {'L1:RG2:KIK:chargeTrigC' : [0.5,1.0]}
     def get_variables(self,variable_names):
@@ -144,5 +125,3 @@ class Environment(environment.Environment):
             # Insufficient successful readings collected
             print('Insufficient successful readings after 10 attempts. Returning zero values.')
             return {observable_name: 0.0 for observable_name in observable_names} 
-
-

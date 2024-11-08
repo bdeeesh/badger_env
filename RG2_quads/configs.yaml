@@ -1,0 +1,6 @@
+---
+name: linac
+description: "linac charge opt "
+version: "0.1"
+dependencies:
+  - badger-opt

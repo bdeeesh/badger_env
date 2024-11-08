@@ -9,21 +9,21 @@ from time import sleep
 class Environment(environment.Environment):
     #SMOKE_TEST = False # do not write anything 
 
-    name = 'linac'  # name of the environment
+    name = 'RG2 quad'  # name of the environment
     variables = {  # variables and their hard-limited ranges
-        'L1:RG2:Q1:SetDacCurrentC': [-2.0, 2.0],
-        'L1:RG2:Q2:SetDacCurrentC': [-2.0, 2.0],
-        'L1:RG2:Q3:SetDacCurrentC': [-2.0, 2.0],
-        'L1:RG2:Q4:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:QM1:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:QM2:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:QM3:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:QM4:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q3:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q4:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q5:SetDacCurrentC': [-2.0, 2.0],
         # steering RG2
-        'L1:V1:SetDacCurrentC': [-2.0, 2.0],
-        'L1:V2:SetDacCurrentC': [-2.0, 2.0],
-        'L1:V3:SetDacCurrentC': [-2.0, 2.0],
-        'L1:H1:SetDacCurrentC': [-2.0, 2.0],
-        'L1:H2:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:V1:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:V2:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:V3:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:H1:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:H2:SetDacCurrentC': [-2.0, 2.0],
         # L2 steering
         'L2:SC1:HZ:PS:setCurrentAO':[ -2.0 ,2.0],  
         'L2:SC1:VL:PS:setCurrentAO':[ -2.0 ,2.0], 
@@ -45,8 +45,11 @@ class Environment(environment.Environment):
         """
         input is a list
         get pvs but first check if the conditons are met
-        need to implement a method to check if the channel is connected 
+
         """
+        #if self.test_conditions(self._test_variables):
+        #    pass
+        
         channels = pva.MultiChannel(variable_names, pva.CA)
         get_value = [v[0]['value'] for v in channels.get().toDict()['value']]
         return {variable_names[k]: get_value[k] for k in range(len(variable_names))}
@@ -68,17 +71,14 @@ class Environment(environment.Environment):
             return None
         else:
             pass
-        values =  list(variable_inputs.values())
+
         channels = pva.MultiChannel(list(variable_inputs.keys()), pva.CA)
-        channels.putAsDoubleArray(values)
+        channels.putAsDoubleArray(list(variable_inputs.values()))
         verify = False
 
-        """
-         try to verify variables 
-         3 x attempts
-        """
+        """try to verify variables  """
         for i in range(3):
-            print(f'verifying attempt {i}')
+            print(f'verifying {i}')
             sleep(0.1)
             new_values = [v[0]['value'] for v in channels.get().toDict()['value']]
             verify = np.isclose(new_values,values,atol=1e-3).all()
