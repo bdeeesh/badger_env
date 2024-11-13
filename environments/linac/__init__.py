@@ -2,7 +2,7 @@ from badger import environment
 from pvaccess import *
 import pvapy as pva
 import numpy as np
-
+import epics
 from time import sleep
 
 
@@ -15,6 +15,12 @@ class Environment(environment.Environment):
         'L1:RG2:Q2:SetDacCurrentC': [-2.0, 2.0],
         'L1:RG2:Q3:SetDacCurrentC': [-2.0, 2.0],
         'L1:RG2:Q4:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:V1:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:V2:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:V3:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:H2:SetDacCurrentC': [-2.0, 2.0],
+        'L1:RG2:H3:SetDacCurrentC': [-2.0, 2.0],
+
         'L1:Q3:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q4:SetDacCurrentC': [-2.0, 2.0],
         'L1:Q5:SetDacCurrentC': [-2.0, 2.0],
@@ -38,7 +44,14 @@ class Environment(environment.Environment):
         # phase L1
         'L1:PP:phaseAdjAO':[6.0e+00,1.0e+01],
     }
+
     observables = ['L1:CM1:measCurrentCM','L3:CM1:measCurrentCM','L5:CM1:measCurrentCM' ]  # measurements
+    TEST_RUN: bool =  False
+    trim_delay: float = 8.0
+    max_attempts: int = 10
+    required_successful_readings: int = 5
+    sleep_time: float = 0.5
+
     # test values before reading
     _test_variables = {'L1:RG2:KIK:chargeTrigC' : [0.5,1.0]}
     def get_variables(self,variable_names):
@@ -47,8 +60,10 @@ class Environment(environment.Environment):
         get pvs but first check if the conditons are met
         need to implement a method to check if the channel is connected 
         """
+        epics.ca.clear_cache()
         channels = pva.MultiChannel(variable_names, pva.CA)
         get_value = [v[0]['value'] for v in channels.get().toDict()['value']]
+        del channels
         return {variable_names[k]: get_value[k] for k in range(len(variable_names))}
 
 
@@ -61,10 +76,10 @@ class Environment(environment.Environment):
 
         Raises:
             Exception: If the values could not be set after retries.
-        """
-        
-        TEST_RUN = True
-        if TEST_RUN:
+        """ 
+        epics.ca.clear_cache()
+        #TEST_RUN = False
+        if self.TEST_RUN:
             return None
         else:
             pass
@@ -72,7 +87,7 @@ class Environment(environment.Environment):
         channels = pva.MultiChannel(list(variable_inputs.keys()), pva.CA)
         channels.putAsDoubleArray(values)
         verify = False
-
+        sleep(self.trim_delay)
         """
          try to verify variables 
          3 x attempts
@@ -88,10 +103,13 @@ class Environment(environment.Environment):
                 pass
         if verify:
             print ('setting variables done')
+            del channels
             #return new_values
         else:
+            del channels
             print (new_values,variable_inputs.values())
             raise Exception("could not write values, check pvs")
+         
 
  
     def get_observables(self,observable_names):
@@ -105,18 +123,17 @@ class Environment(environment.Environment):
         Returns:
             dict[str, float]: A dictionary mapping observable names to their averaged values over time.
         """
-        max_attempts = 10
-        required_successful_readings = 5
-        sleep_time = 0.5
+        epics.ca.clear_cache()
+
         observed_values_list = []
 
         # Initialize channels for observables outside the loop
         channels = pva.MultiChannel(observable_names, pva.CA)
 
-        for attempt in range(max_attempts):
+        for attempt in range(self.max_attempts):
             conditions = True
             # Check test conditions
-            for key, (min_val, max_val) in _test_variables.items():
+            for key, (min_val, max_val) in self._test_variables.items():
                 current_value = pva.Channel(key, pva.CA).get()['value']
                 if isinstance(current_value, dict):
                     current_value = current_value['index']
@@ -129,20 +146,26 @@ class Environment(environment.Environment):
                 raw_values = channels.get().toDict()['value']
                 observed_values = [v[0]['value'] for v in raw_values]
                 observed_values_list.append(observed_values)
-                if len(observed_values_list) >= required_successful_readings:
+                print (f'acquired {len(observed_values_list)} reading(s)')
+                if len(observed_values_list) >= self.required_successful_readings:
                     # Required number of successful readings collected
                     break
             # Sleep before the next attempt
-            sleep(sleep_time)
-
-        if len(observed_values_list) >= required_successful_readings:
+            sleep(self.sleep_time)
+        
+        if len(observed_values_list) >= self.required_successful_readings:
             # Compute the average across successful readings
             observed_values_over_time = np.array(observed_values_list)
             averaged_values = np.average(observed_values_over_time, axis=0)
+            std_values = np.std(observed_values_over_time, axis=0)
+            print (f'obtained averaged_values {averaged_values} and sigma {std_values} ')
+            del channels
             return {observable_names[k]: averaged_values[k] for k in range(len(observable_names))}
+
         else:
             # Insufficient successful readings collected
             print('Insufficient successful readings after 10 attempts. Returning zero values.')
-            return {observable_name: 0.0 for observable_name in observable_names} 
+            del channels
+            return {observable_name: np.nan for observable_name in observable_names} 
 
 
